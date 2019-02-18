@@ -303,13 +303,135 @@ rospy.loginfo_throttle(10, status2str(pose, params["goal"]))
 
 \begin{section}{Services}
     \begin{frame}{Services}
-
+        \begin{block}{Services}
+            Publishing and subscribing to topics are not the only way to handle messages in ROS. 
+            Services are similar to the message passing you may be familiar with in MPI. Content of messages specified by \textit{service data type}. 
+        \end{block}
+        \begin{itemize}
+            \item Service calls are bi-directional: a sender expects a response
+            \begin{itemize}
+                \item With topics: you just send messages. No idea if any nodes are subscribed
+                \item With services: send to a specific node and wait for response
+            \end{itemize}
+            \item Service calls are one-to-one: 
+                \item With topics: arbitrary number of opt-in recipients. 
+                \item With services: 
+                \begin{itemize}
+                    \item A sends \textit{request} to B: A $\rightarrow$ B
+                    \item B sends \textit{respond} to A: A $\leftarrow$ B
+                \end{itemize}
+        \end{itemize}
+        \includegraphics[width=0.45\textwidth,trim={0cm 0cm 0cm 0cm},clip]{img/services.png}
+    \end{frame}
+    
+    \begin{frame}[fragile]{Services}
+        \begin{block}{Command Line Service Management}
+            \begin{itemize}
+                \item[] List all services: \lstinline{rosparam list}
+                    \begin{lstlisting}
+    /clear
+    /kill
+    /reset
+    /rosout/get_loggers
+    /rosout/set_logger_level
+    /spawn
+    /turtle1/set_pen
+    /turtle1/teleport_absolute
+    /turtle1/teleport_relative
+    /turtlesim/get_loggers
+    /turtlesim/set_logger_level
+                    \end{lstlisting}
+                \item[] List all node-specific services: \lstinline{rosnode info turtlesim}
+                    \begin{lstlisting}
+    /turtle1/teleport_absolute
+    /turtlesim/get_loggers
+    /turtlesim/set_logger_level
+    /reset
+    /spawn
+    /clear
+                    \end{lstlisting}                
+                \end{itemize}
+            \end{block}
+    \end{frame}
+    \begin{frame}[fragile]{Services}
+        \begin{block}{Command Line Service Management}   
+                \begin{itemize}
+                    \item[] Find a service's host node: \lstinline{rosservice node /spawn}
+                    \begin{lstlisting}
+    /turtlesim
+                    \end{lstlisting}
+                \item[] Find a service's data type: \lstinline{rosservice into /spawn} \\
+                    \begin{lstlisting}
+    Node: /turtlesim
+    URI: <your URI>
+    Type: turtlesim/Spawn
+    Args: x y theta name
+                    \end{lstlisting}
+                \item[] Inspect a service's data type: \lstinline{rossrv show turtlesim/Spawn}
+                    \begin{lstlisting}
+float32 x
+float32 y
+float32 theta
+string name
+---
+string name
+                    \end{lstlisting}
+                \item[] Call a service: \lstinline{rosservice call /spawn 5 5 0 Sally} \\
+                Adds turtle named Sally at with position (x:5, y:5, theta:0) \\
+                The \textit{/spawn} service was used within the turtlesim code.
+            \end{itemize}
+        \end{block}     
     \end{frame}
 \end{section}
 
 \begin{section}{Recording \& Replaying Messages}
     \begin{frame}{Recording \& Replaying Messages}
+        \begin{block}{Message-based Architecture}
+            \begin{itemize}
+                \item Core to ROS: nodes act upon information on topics \& services
+                \item Nodes should not care \textit{who} sends that information
+                \item Example: turtlebot should not know if move commands come from command line, keyboard, or joystick 
+            \end{itemize}
+        \end{block}
+        \begin{block}{rosbag}
+            \begin{itemize}
+                \item rosbag allows you to record messages and replay them
+                \item Start recording: \\
+                \lstinline{rosbag record -O filename.bag topic-names} \\
+                All messages published on the topic-names will be recorded to file filename.bag
+                \item Replay recording: \\
+                \lstinline{rosbag play filename.bag} \\
+                Those messages will be republished on their original topics. \\
+                Original timing is preserved!
+            \end{itemize}
+        \end{block}
     \end{frame}
+    \begin{frame}[fragile]{Recording \& Replaying Messages}
+        \begin{block}{Bags in Launch Files}
+            \begin{itemize}
+                \item A launch file \textit{record} node
+                    \begin{lstlisting}
+    <node
+    pkg="rosbag"
+    name="record"
+    type="record"
+    args="-O filename.bag topic-names"
+    />
+                    \end{lstlisting}                
+                \item Launch file \textit{play} node
+                    \begin{lstlisting}
+    <node
+    pkg="rosbag"
+    name="play"
+    type="play"
+    args="filename.bag"
+    />
+                    \end{lstlisting}
+            \end{itemize}
+        \end{block}
+    \end{frame}
+    
+    
 \end{section}
 
 \begin{section}{References}
@@ -322,12 +444,3 @@ rospy.loginfo_throttle(10, status2str(pose, params["goal"]))
     \end{frame}
 \end{section}
 \end{document}
-
-
-
-
-
-
-
-
-
